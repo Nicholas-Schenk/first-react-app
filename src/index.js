@@ -31,11 +31,6 @@ import './index.css';
     For example, now we can refer to the whole shopping list by writing <ShoppingList />
 */
 class Square extends React.Component {
-    constructor(props){
-        super(props);
-        this.state={value:null};
-    }
-
 
     //what does it do tho? it renders a single button!
     render() {
@@ -56,29 +51,113 @@ class Square extends React.Component {
         replaced this.props.value with this.state.value
         made the event handler set the state with this.setState({value: 'X'})
 
+    By calling this.setState from an onclick handler in the Square's render method, we tell React to re-render that square whenever its button is clicked.
+    When you call setState in a component, React automatically updates the child components inside of it too.
     */ 
       return (
         <button className="square" 
-                onClick={
-            ()=>{this.setState({value: 'X'})}}
+                onClick={()=>{this.props.onClick()}}
         >
-          {this.state.value}
+          {this.props.value}
         </button>
       );
     }
   }
+
+
   
   class Board extends React.Component {
+      constructor(props){
+          super(props);
+          this.state={
+              squares: Array(9).fill(null),
+              turn: 'X',
+              gameOver: false,
+          };
+      }
+    checkVictory(){
+        for(var i = 0; i < 3; i++){
+            if(this.state.squares[3*i] !== null && this.state.squares[3*i] === this.state.squares[3*i+1] && this.state.squares[3*i] === this.state.squares[3*i+2]){
+                return true;
+            }
+        }
+
+        for(var i = 0; i < 3; i++){
+            if(this.state.squares[i] !== null &&this.state.squares[i] === this.state.squares[i+3] && this.state.squares[i] === this.state.squares[i+6]){
+                return true;
+            }
+        }
+
+        if(this.state.squares[0] !== null &&this.state.squares[0] === this.state.squares[4] && this.state.squares[0] === this.state.squares[8]){
+            return true;
+        }
+
+        if(this.state.squares[2] !== null &&this.state.squares[2] === this.state.squares[4] && this.state.squares[2] === this.state.squares[6]){
+            return true;
+        }
+
+
+        return false;
+
+    }
+
+      handleClick(i){
+          const squares = this.state.squares.slice();
+          //squares[i]= 'X';
+          //this.setState({squares: squares});
+          if(squares[i] === null &&this.state.gameOver!==true){
+                if(this.checkVictory()){
+                    this.setState({gameOver: true});
+                    return;
+                }
+        
+              squares[i] = this.state.turn;
+              this.setState({squares: squares});
+              if(this.state.turn === 'X'){
+                this.setState({turn: 'O'});
+            } else{
+                this.setState({turn: 'X'});
+            }
+          }
+      }
+      
+    reset(){
+        this.setState({
+            squares: Array(9).fill(null),
+            turn: 'X',
+            gameOver: false,
+        });
+    }
+    
     //what does it do? it renders 9 squares.
     //also creates the method renderSquare which returns a Square object
     renderSquare(i) {
       // now we have made it so that we are passing a 'prop' called value to the Square.
-      return <Square value ={i}/>;
+      return (<Square value ={this.state.squares[i]}
+      onClick={()=>this.handleClick(i)}
+      />
+      );
     }
   
     render() {
-      const status = 'Next player: X';
-  
+      var status = 'Next player: '+this.state.turn;
+      if(this.checkVictory()){
+            let temp = 'X';
+            if(this.state.turn === 'X'){
+                temp = 'O';
+            }
+            status = 'GAME OVER ' +temp+ ' WINS';
+      }else{
+        var gameDone = true;
+        for(let k =0; k < 9; k++){
+          if(this.state.squares[k]==null){
+            gameDone = false;
+          }
+        }
+        if(gameDone){
+            status = 'GAME OVER NO ONE WINS';
+        }
+      }
       return (
         <div>
           <div className="status">{status}</div>
@@ -97,6 +176,7 @@ class Square extends React.Component {
             {this.renderSquare(7)}
             {this.renderSquare(8)}
           </div>
+          <button onClick={()=>{this.reset()}} >Reset</button>
         </div>
       );
     }
